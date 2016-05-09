@@ -5,60 +5,41 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class GameTestMain extends ApplicationAdapter {
-	SpriteBatch batch;
+
 	OrthographicCamera cam;
 	FitViewport viewport;
 	
-	private Texture kidTexture;
-	private TextureRegion[][] kidTR;
-	private Animation animUP, animDOWN, animLEFT, animRIGHT, anim;
-	private int KID_WIDTH = 48;
-	private int KID_HEIGHT = 48;
-	private Vector2 kidPos;
-	private boolean movement = false;
+	Stage stage;
 	
-	private int WORLD_WIDTH = 1440;
-	private int WORLD_HEIGHT = 1440;
+	KidActor kidActor;
+	BackgroundActor backgroundActor;
 	
-	private float elapsedTime = 0;
-	
-	private Texture grid;
-
 	private boolean followKid = true;
 	
+	
+
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
+		//batch = new SpriteBatch();
 
-		grid = new Texture("grid.png");
 		
-		kidTexture = new Texture("george.png");
-		kidTR = TextureRegion.split(kidTexture, KID_WIDTH, KID_HEIGHT);
-
-		// Create animations for movement 
-		animDOWN  = new Animation(0.25f, kidTR[0][0], kidTR[1][0], kidTR[2][0], kidTR[3][0]);
-		animLEFT  = new Animation(0.25f, kidTR[0][1], kidTR[1][1], kidTR[2][1], kidTR[3][1]);
-		animUP    = new Animation(0.25f, kidTR[0][2], kidTR[1][2], kidTR[2][2], kidTR[3][2]);
-		animRIGHT = new Animation(0.25f, kidTR[0][3], kidTR[1][3], kidTR[2][3], kidTR[3][3]);
-
-		// Set initial position of the kid
-		anim = animDOWN;
-		kidPos = new Vector2(0, 0);
-		//anim.getKeyFrame(0, movement);
+		kidActor = new KidActor();
+		backgroundActor = new BackgroundActor();
 		
-		// Set the cam
+		// Set the viewport
 		cam = new OrthographicCamera();
-	    viewport = new FitViewport(KID_WIDTH * 7, 9.0f/16*KID_WIDTH*7, cam);
-	    viewport.apply(true);		
-				
+	    viewport = new FitViewport(kidActor.KID_WIDTH * 7, 9.0f/16*kidActor.KID_WIDTH*7, cam);
+	    viewport.apply(true);
+
+		stage = new Stage(viewport);
+		stage.addActor(backgroundActor);
+		stage.addActor(kidActor);
+	    
 	}
 
 	@Override
@@ -69,22 +50,16 @@ public class GameTestMain extends ApplicationAdapter {
 		checkControls();
 
 		cam.update();
-		batch.setProjectionMatrix(cam.combined);
+		//batch.setProjectionMatrix(cam.combined);
 		
-		batch.begin();
-		elapsedTime += Gdx.graphics.getDeltaTime();
-		batch.draw(grid,0,0);
-		batch.draw(anim.getKeyFrame(elapsedTime, movement), kidPos.x, kidPos.y);
-		batch.end();
-		
-		movement = false;
+		stage.act(Gdx.graphics.getDeltaTime());
+		stage.draw();
 		
 	}
 	
 	@Override
 	public void dispose () {
-		grid.dispose();
-		kidTexture.dispose();
+		stage.dispose();
 	}
 	
 	@Override
@@ -95,33 +70,9 @@ public class GameTestMain extends ApplicationAdapter {
 	
 	private void checkControls () {
         
-		if(Gdx.input.isKeyPressed(Input.Keys.LEFT)){
-            anim = animLEFT;
-            kidPos.x -= 2;
-            if (kidPos.x < 0) kidPos.x = 0;
-            movement = true;
-            
-        }
-        if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)){
-        	anim = animRIGHT;
-        	kidPos.x += 2;
-        	if (kidPos.x > WORLD_WIDTH - KID_WIDTH) 
-        		kidPos.x = WORLD_WIDTH - KID_WIDTH;
-        	movement = true;
-        }
-        if(Gdx.input.isKeyPressed(Input.Keys.UP)){
-        	anim = animUP;
-        	kidPos.y += 2;
-        	if (kidPos.y > WORLD_HEIGHT - KID_WIDTH) 
-        		kidPos.y = WORLD_HEIGHT - KID_WIDTH;        	
-        	movement = true;
-        }		
-        if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
-        	anim = animDOWN;
-        	kidPos.y -= 2;
-        	if (kidPos.y < 0) kidPos.y = 0;
-        	movement = true;
-        }		
+		kidActor.checkMovement();
+		
+	
         
         if(Gdx.input.isKeyPressed(Input.Keys.Q)){
         	cam.zoom -= 0.01;
@@ -155,10 +106,9 @@ public class GameTestMain extends ApplicationAdapter {
         }        
         
         if (followKid == true) {
-        	cam.position.x = kidPos.x + KID_WIDTH/2;
-        	cam.position.y = kidPos.y + KID_HEIGHT/2;
+        	cam.position.x = kidActor.getX() + kidActor.KID_WIDTH/2;
+        	cam.position.y = kidActor.getY() + kidActor.KID_HEIGHT/2;
         }
 	}
-	
 	
 }
